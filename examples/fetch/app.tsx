@@ -1,16 +1,20 @@
 import {
-  Button,
+  Button, CheckboxGroup,
   FormField,
   MultilineInput,
   Rows,
-  Text,
+  Text, TextInput,
   Title,
 } from "@canva/app-ui-kit";
 import { auth } from "@canva/user";
 import React, { useState } from "react";
 import styles from "styles/components.css";
+import {addNativeElement} from "@canva/design";
+import { getDefaultPageDimensions } from "@canva/design";
 
-const BACKEND_URL = `${BACKEND_HOST}/custom-route`;
+
+const TEAMS_BACKEND_URL = `${BACKEND_HOST}/teams`;
+const GAMES_BACKEND_URL = `${BACKEND_HOST}/games`;
 
 type State = "idle" | "loading" | "success" | "error";
 
@@ -20,17 +24,28 @@ export const App = () => {
     undefined
   );
 
-  const sendGetRequest = async () => {
+  const [gamesBody, setGamesBody] = useState<unknown | undefined>(
+      undefined
+  );
+
+  const [selectedValues, setSelectedValues] = useState<string[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>();
+  const getTeamsRequest = async () => {
     try {
       setState("loading");
       const token = await auth.getCanvaUserToken();
-      const res = await fetch(BACKEND_URL, {
+
+
+      const res = await fetch(TEAMS_BACKEND_URL, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+
       const body = await res.json();
+
+
       setResponseBody(body);
       setState("success");
     } catch (error) {
@@ -39,32 +54,126 @@ export const App = () => {
     }
   };
 
+  const handleCheckboxChange = (newSelectedValues: string[]) => {
+    setSelectedValues(newSelectedValues);
+  };
+
+  const getGamesRequest = async () => {
+    try {
+      setState("loading");
+      console.error(selectedValues);
+      const token = await auth.getCanvaUserToken();
+      const res = await fetch(GAMES_BACKEND_URL + "?teams=" + selectedValues + "&date=" + selectedDate, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const body = await res.json();
+
+      console.error(body);
+
+
+      const defaultPageDimensions = await getDefaultPageDimensions();
+
+      let blocksizePixels = defaultPageDimensions?.width / 21;
+
+          for (let i = 0; i < body.matches.length; i++) {
+
+            await addNativeElement({
+              type: "TEXT",
+              children: [body.matches[i].tTNaam],
+              fontSize: 25,
+              color: "#ffffff",
+              top: 100 * (i+1),
+              left: blocksizePixels,
+              width: blocksizePixels*8
+            });
+
+            await addNativeElement({
+              type: "TEXT",
+              children: [body.matches[i].beginTijd + "\n-VS-"],
+              fontSize: 25,
+              color: "#ffffff",
+              top: 100 * (i+1),
+              left: blocksizePixels*9,
+              width: blocksizePixels*3
+            });
+            await addNativeElement({
+              type: "TEXT",
+              children: [body.matches[i].tUNaam],
+              fontSize: 25,
+              color: "#ffffff",
+              top: 100 * (i+1),
+              left: blocksizePixels*12,
+              width: blocksizePixels*8
+            });
+          }
+
+
+
+    //  setGamesBody(body);
+      setState("success");
+    } catch (error) {
+      setState("error");
+      console.error(error);
+    }
+  };
+
+  function handleDateChange(newSelectedText: string) {
+    setSelectedDate(newSelectedText);
+  }
+
   return (
     <div className={styles.scrollContainer}>
       <Rows spacing="3u">
         <Text>
-          This example demonstrates how apps can securely communicate with their
-          servers via the browser's Fetch API.
+         Ophalen van teams en matches van basket Blankenberge
         </Text>
+
+        <TextInput
+            onBlur={function noRefCheck(){}}
+            onChange={handleDateChange}
+            onFocus={function noRefCheck(){}}
+            onKeyDown={function noRefCheck(){}}
+            placeholder="Formaat: 17-08-2024"
+        />
         {/* Idle and loading state */}
         {state !== "error" && (
           <>
             <Button
               variant="primary"
-              onClick={sendGetRequest}
+              onClick={getTeamsRequest}
               loading={state === "loading"}
               stretch
             >
-              Send GET request
+              Get Teams
             </Button>
             {state === "success" && responseBody && (
-              <FormField
-                label="Response"
-                value={JSON.stringify(responseBody, null, 2)}
-                control={(props) => (
-                  <MultilineInput {...props} maxRows={5} autoGrow readOnly />
-                )}
-              />
+
+              <CheckboxGroup
+              onBlur={function noRefCheck(){}}
+            onChange={handleCheckboxChange}
+            onFocus={function noRefCheck(){}}
+            options={responseBody.teams}
+          />
+
+
+            )}
+
+            {state === "success" && responseBody && (
+                <Button
+                      variant="primary"
+                      onClick={getGamesRequest}
+                      loading={state === "loading"}
+                      stretch
+
+                >
+                  Get Games for selected teams
+                </Button>
+
+
+
             )}
           </>
         )}
