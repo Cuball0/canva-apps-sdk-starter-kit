@@ -12,9 +12,10 @@ import styles from "styles/components.css";
 import {addNativeElement} from "@canva/design";
 import { getDefaultPageDimensions } from "@canva/design";
 
+//action=teams&context=BVBL1432
 
-const TEAMS_BACKEND_URL = `${BACKEND_HOST}/teams`;
-const GAMES_BACKEND_URL = `${BACKEND_HOST}/games`;
+const TEAMS_BACKEND_URL = `${BACKEND_HOST}&action=teams`;
+const GAMES_BACKEND_URL = `${BACKEND_HOST}&action=games`;
 
 type State = "idle" | "loading" | "success" | "error";
 
@@ -36,7 +37,7 @@ export const App = () => {
       const token = await auth.getCanvaUserToken();
 
 
-      const res = await fetch(TEAMS_BACKEND_URL, {
+      const res = await fetch(TEAMS_BACKEND_URL +'&context=BVBL1432', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -63,7 +64,7 @@ export const App = () => {
       setState("loading");
       console.error(selectedValues);
       const token = await auth.getCanvaUserToken();
-      const res = await fetch(GAMES_BACKEND_URL + "?teams=" + selectedValues + "&date=" + selectedDate, {
+      const res = await fetch(GAMES_BACKEND_URL + "&context=" + selectedValues + "&date=" + selectedDate, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
