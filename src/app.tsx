@@ -6,15 +6,15 @@ import {
   Text, TextInput,
   Title,
 } from "@canva/app-ui-kit";
-import { auth } from "@canva/user";
 import React, { useState } from "react";
 import styles from "styles/components.css";
 import {addNativeElement} from "@canva/design";
 import { getDefaultPageDimensions } from "@canva/design";
 
+//action=teams&context=BVBL1432
 
-const TEAMS_BACKEND_URL = `${BACKEND_HOST}/teams`;
-const GAMES_BACKEND_URL = `${BACKEND_HOST}/games`;
+const TEAMS_BACKEND_URL = `${BACKEND_HOST}&action=teams`;
+const GAMES_BACKEND_URL = `${BACKEND_HOST}&action=games`;
 
 type State = "idle" | "loading" | "success" | "error";
 
@@ -33,14 +33,15 @@ export const App = () => {
   const getTeamsRequest = async () => {
     try {
       setState("loading");
-      const token = await auth.getCanvaUserToken();
-      const res = await fetch(TEAMS_BACKEND_URL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    
+      const res = await fetch(TEAMS_BACKEND_URL +'&context=BVBL1432', {
+       
       });
 
+
       const body = await res.json();
+
+
       setResponseBody(body);
       setState("success");
     } catch (error) {
@@ -57,11 +58,9 @@ export const App = () => {
     try {
       setState("loading");
       console.error(selectedValues);
-      const token = await auth.getCanvaUserToken();
-      const res = await fetch(GAMES_BACKEND_URL + "?teams=" + selectedValues + "&date=" + selectedDate, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+
+      const res = await fetch(GAMES_BACKEND_URL + "&context=" + selectedValues + "&date=" + selectedDate, {
+
       });
 
       const body = await res.json();
@@ -73,11 +72,11 @@ export const App = () => {
 
       let blocksizePixels = defaultPageDimensions?.width / 21;
 
-          for (let i = 0; i < body.matches.length; i++) {
+          for (let i = 0; i < body.results.games.length; i++) {
 
             await addNativeElement({
               type: "TEXT",
-              children: [body.matches[i].tTNaam],
+              children: [body.results.games[i].tTNaam],
               fontSize: 25,
               color: "#ffffff",
               top: 100 * (i+1),
@@ -87,7 +86,7 @@ export const App = () => {
 
             await addNativeElement({
               type: "TEXT",
-              children: [body.matches[i].beginTijd + "\n-VS-"],
+              children: [body.results.games[i].beginTijd + "\n-VS-"],
               fontSize: 25,
               color: "#ffffff",
               top: 100 * (i+1),
@@ -96,7 +95,7 @@ export const App = () => {
             });
             await addNativeElement({
               type: "TEXT",
-              children: [body.matches[i].tUNaam],
+              children: [body.results.games[i].tUNaam],
               fontSize: 25,
               color: "#ffffff",
               top: 100 * (i+1),
@@ -150,7 +149,7 @@ export const App = () => {
               onBlur={function noRefCheck(){}}
             onChange={handleCheckboxChange}
             onFocus={function noRefCheck(){}}
-            options={responseBody.teams}
+            options={responseBody["results"].teams}
           />
 
 
